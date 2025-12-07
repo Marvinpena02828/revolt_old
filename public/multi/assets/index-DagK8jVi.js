@@ -15980,7 +15980,7 @@ function I4({
                         className: "mr-2"
                     }), "Pop-up dashboard"]
                 }), K.jsxs("a", {
-                    href: `http://localhost:${s}`,
+                href: `${window.location.origin}` ,
                     target: "_blank",
                     className: `${s?"":"opacity-50 pointer-events-none"} bg-zinc-600 whitespace-nowrap px-4 py-2 rounded-xl active:bg-blue-700 active:ring-blue-400 hover:ring ring-blue-600 ring-offset-2 ring-offset-zinc-700  hover:bg-blue-600 duration-200`,
                     children: [K.jsx(re, {
