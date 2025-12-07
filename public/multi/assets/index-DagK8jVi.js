@@ -15960,30 +15960,9 @@ function I4({
         }
     }
 
-  async function Z() {
-    h("stop_server");
-    
-    try {
-        // Call the new /api/stop_server endpoint on main domain
-        // This avoids trying to hit individual bot ports
-        const response = await wt.post(`/api/stop_server?server=${l}`);
-        
-        if (response.data && !response.data.error) {
-            // Success - status will update via Socket.IO
-            console.log("Bot stopped successfully");
-        }
-        
-        // Reset status indicator after 1 second
-        setTimeout(() => {
-            h("");
-        }, 1000);
-        
-    } catch (error) {
-        console.error("Error stopping bot:", error);
-        // Reset immediately on error
-        h("");
+    async function Z() {
+        h("stop_server"), await wt(`${window.location.origin}/api/end_server`)
     }
-}
     async function q() {
         E(!0), setTimeout(async () => {
             await wt.delete(`/api/server?server=${l}`)
