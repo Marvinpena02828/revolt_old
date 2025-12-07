@@ -15912,10 +15912,9 @@ function I4({
 function N() {
     // On Railway, use same origin. Locally, use port
     const isDashboardAccessible = !window.location.hostname.includes('railway.app');
-    const dashboardUrl = isDashboardAccessible 
-        ? `${window.location.protocol}//${window.location.hostname}:${s}`
-        : `${window.location.origin}?server=${IDENTIFIER_USER}`;  // Open in new tab instead
-    
+  const dashboardUrl = isDashboardAccessible 
+    ? `${window.location.protocol}//${window.location.hostname}:${s}`
+    : `${window.location.origin}?server=${i}`;
     if (!isDashboardAccessible) {
         // On Railway, open in same tab (new tab won't work with ports)
         window.location.href = dashboardUrl;
