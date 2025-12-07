@@ -491,13 +491,13 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 			console.log("Cleanup error:", e.message);
 		}
 
-		// Launch browser with retry logic
+		// Launch browser with retry logic - ALWAYS HEADLESS ON RAILWAY
 		let launchAttempts = 0;
 		while (launchAttempts < 3) {
 			try {
 				browser = await puppeteer.launch({
 					userDataDir: browserDataDir,
-					headless: force_headful ? false : IS_HEADLESS,
+					headless: true,  // ← RAILWAY FIX: Always true (no X server)
 					args: [
 						"--disable-blink-features=AutomationControlled",
 						"--no-first-run",
@@ -520,7 +520,7 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 		}
 
 		addLog({ type: "DebugMessage", message: "Puppeteer browser has launched. Bot dashboard panel will open once Revolt account is authenticated." });
-		addLog({ type: "DebugMessage", message: `Puppeteer browser is currently running in ${(force_headful ? false : IS_HEADLESS) ? "Headless" : "Headful"} mode` });
+		addLog({ type: "DebugMessage", message: "Puppeteer browser is currently running in Headless mode" });
 
 		const page = await browser.newPage();
 		page.goto("https://workers.onech.at/");
@@ -572,11 +572,7 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 					global_page = page;
 					token = parsed.token;
 					
-					if (force_headful) {
-						addLog({ type: "DebugMessage", message: "You can now close the browser window. Bot will continue running." });
-					} else {
-						addLog({ type: "DebugMessage", message: "Successfully authenticated. Bot is ready!" });
-					}
+					addLog({ type: "DebugMessage", message: "Successfully authenticated. Bot is ready!" });
 				}
 			}
 		});
@@ -618,9 +614,10 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 					return;
 				}
 
-				force_headful = true;
-				addLog({ type: "DebugMessage", message: `Revolt redirected to "/login" (attempt ${loginRedirectCount}/2)` });
-				addLog({ type: "DebugMessage", message: `Restarting Puppeteer browser in headful mode to show log in prompt` });
+				// ← RAILWAY FIX: Comment out force_headful (can't run headful on Railway)
+				// force_headful = true;
+				addLog({ type: "DebugMessage", message: `Revolt redirected to "/login" - Manual authentication required` });
+				addLog({ type: "DebugMessage", message: "Login page detected - please authenticate via dashboard" });
 
 				try {
 					const cookies = await page.cookies();
@@ -647,10 +644,11 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 				}, 1000);
 			}
 
-			// Cloudflare detection
+			// Cloudflare detection - ← RAILWAY FIX: Comment out force_headful
 			if (((await page.content()).toLowerCase().includes("security of your connection") || (await page.content()).toLowerCase().includes("blocked")) && !force_headful) {
-				addLog({ type: "DebugMessage", message: `Cloudflare detected. Restarting in headful mode` });
-				force_headful = true;
+				addLog({ type: "DebugMessage", message: `Cloudflare detected - please complete verification manually` });
+				// ← RAILWAY FIX: Comment out force_headful (can't run headful on Railway)
+				// force_headful = true;
 
 				try {
 					const cookies = await page.cookies();
@@ -679,39 +677,6 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 		};
 
 		page.on("framenavigated", frameNavHandler);
-
-		if (force_headful) {
-			return await page.evaluate(async (original_username) => {
-				var html = `<div id="last_accessed" style="
-                    pointer-events: none;
-                    display: flex;
-                    position: absolute;
-                    top: 80px;
-                    right: 10px;
-                    z-index: 10000000;
-                    background: #d5ff95;
-                    border: 2px black dashed;
-                    padding: 0.5rem 0.6rem;
-                    border-radius: 1rem;
-                    flex-direction: column;
-                    color: black;
-                    opacity: 0.7;
-                    gap: 5px;
-                "><div style="
-                    display: flex;
-                    flex-direction: column;
-                ">
-                <span>You are currently logging in for: "${original_username}"</span>
-                <span style="margin-bottom: 1rem;">Data will be saved in "${original_username}" folder</span>
-                <span>Cloudflare problems? Clear cookies.</span>
-                </div>`;
-
-				var element = document.createElement("div");
-				element.innerHTML = html;
-
-				document.body.append(element);
-			}, original_username);
-		}
 
 		setTimeout(() => {
 			is_running = true;
@@ -1474,14 +1439,14 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 	try {
 		addLog({ type: "DebugMessage", message: "Trying to start bot dashboard server" });
 
-server.listen(port, () => {
-	const serverUrl = process.env.RAILWAY_DOMAIN ? `https://${process.env.RAILWAY_DOMAIN}` : `http://localhost:${port}`;
-	console.log(`Now listening to: ${serverUrl}`);
-	if (!process.env.RAILWAY_DOMAIN) {
-		open(serverUrl);
-	}
-	addLog({ type: "DebugMessage", message: `Now listening to: ${serverUrl}` });
-});
+		server.listen(port, () => {
+			const serverUrl = process.env.RAILWAY_DOMAIN ? `https://${process.env.RAILWAY_DOMAIN}` : `http://localhost:${port}`;
+			console.log(`Now listening to: ${serverUrl}`);
+			if (!process.env.RAILWAY_DOMAIN) {
+				open(serverUrl);
+			}
+			addLog({ type: "DebugMessage", message: `Now listening to: ${serverUrl}` });
+		});
 	} catch (error) {
 		if (error.code == "ERR_SERVER_ALREADY_LISTEN") {
 			addLog({ type: "DebugMessage", message: "Bot dashboard server already running" });
