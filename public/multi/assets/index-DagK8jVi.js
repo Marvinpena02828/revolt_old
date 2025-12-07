@@ -15909,7 +15909,6 @@ function I4({
     glowUp: o
 }) {
     const [f, h] = Le.useState(""), [y, v] = Le.useState(!1), [p, E] = Le.useState(!1);
-
 function N() {
     window.open(`${window.location.origin}`, `@${i} - revolt bot server`, "width=600,height=400")
 }
