@@ -15910,15 +15910,14 @@ function I4({
 }) {
     const [f, h] = Le.useState(""), [y, v] = Le.useState(!1), [p, E] = Le.useState(!1);
 
- function N() {
-    const dashboardUrl = `${window.location.protocol}//${window.location.hostname}:${s}`;
-    window.open(dashboardUrl, `@${i} - revolt bot server`, "width=600,height=400")
+function N() {
+    window.open(`${window.location.origin}`, `@${i} - revolt bot server`, "width=600,height=400")
 }
     async function U() {
         await wt.post(`/api/server?server=${l}`)
     }
     async function Z() {
-        h("stop_server"), await wt(`http://127.0.0.1:${s}/api/end_server`)
+        h("stop_server"), await wt(`${window.location.origin}/api/end_server`)
     }
     async function q() {
         E(!0), setTimeout(async () => {
