@@ -15910,7 +15910,19 @@ function I4({
 }) {
     const [f, h] = Le.useState(""), [y, v] = Le.useState(!1), [p, E] = Le.useState(!1);
 function N() {
-    window.open(`${window.location.origin}`, `@${i} - revolt bot server`, "width=600,height=400")
+    // On Railway, use same origin. Locally, use port
+    const isDashboardAccessible = !window.location.hostname.includes('railway.app');
+    const dashboardUrl = isDashboardAccessible 
+        ? `${window.location.protocol}//${window.location.hostname}:${s}`
+        : `${window.location.origin}?server=${IDENTIFIER_USER}`;  // Open in new tab instead
+    
+    if (!isDashboardAccessible) {
+        // On Railway, open in same tab (new tab won't work with ports)
+        window.location.href = dashboardUrl;
+    } else {
+        // Locally, can use popup with port
+        window.open(dashboardUrl, `@${i} - revolt bot server`, "width=600,height=400")
+    }
 }
     async function U() {
         await wt.post(`/api/server?server=${l}`)
