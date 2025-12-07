@@ -502,6 +502,8 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 						"--disable-blink-features=AutomationControlled",
 						"--no-first-run",
 						"--no-default-browser-check",
+						"--no-sandbox",
+						"--disable-setuid-sandbox",
 					],
 				});
 				addLog({ type: "DebugMessage", message: "Puppeteer browser launched successfully" });
@@ -880,7 +882,7 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 			for (let index = 0; index < responses[`${serverId}_keywords`].length; index++) {
 				const keyword = responses[`${serverId}_keywords`][index];
 
-				if (`${serverId}_keywords_is_case_sensitive`) {
+				if (responses[`${serverId}_keywords_is_case_sensitive`]) {
 					if (channelName.toLowerCase().includes(keyword.toLowerCase())) {
 						return {
 							canReply: true,
