@@ -15900,7 +15900,6 @@ function $4() {
         })
     })
 }
-
 function I4({
     username: i,
     folder: l,
@@ -15909,41 +15908,58 @@ function I4({
     glowUp: o
 }) {
     const [f, h] = Le.useState(""), [y, v] = Le.useState(!1), [p, E] = Le.useState(!1);
-function N() {
-    // On Railway, use same origin. Locally, use port
-    const isDashboardAccessible = !window.location.hostname.includes('railway.app');
-    const dashboardUrl = isDashboardAccessible 
-        ? `${window.location.protocol}//${window.location.hostname}:${s}`
-        : `${window.location.origin}?server=${IDENTIFIER_USER}`;  // Open in new tab instead
-    
-    if (!isDashboardAccessible) {
-        // On Railway, open in same tab (new tab won't work with ports)
-        window.location.href = dashboardUrl;
-    } else {
-        // Locally, can use popup with port
-        window.open(dashboardUrl, `@${i} - revolt bot server`, "width=600,height=400")
-    }
-}
- async function U() {
-    await wt.post(`/api/server?server=${l}`);
-    
-    // Poll for bot to be ready
-    let isRunning = false;
-    for (let i = 0; i < 30; i++) {
-        await new Promise(r => setTimeout(r, 500));
+
+    // Pop-up dashboard button handler
+    function N() {
+        // On Railway, use same origin. Locally, use port
+        const isDashboardAccessible = !window.location.hostname.includes('railway.app');
+        const dashboardUrl = isDashboardAccessible 
+            ? `${window.location.protocol}//${window.location.hostname}:${s}`
+            : `${window.location.origin}`;
         
-        const servers = await wt.get(`/api/running-servers`);
-        if (servers.data[l]?.is_running) {
-            isRunning = true;
-            break;
+        if (!isDashboardAccessible) {
+            // On Railway, open in new tab (can't use port)
+            window.open(dashboardUrl, `_blank`);
+        } else {
+            // Locally, can use popup with port
+            window.open(dashboardUrl, `@${i} - revolt bot server`, "width=600,height=400")
         }
     }
-    
-    if (isRunning) {
-        // Auto-open dashboard!
-        window.open(`${window.location.origin}`, `_blank`);
+
+    // START BOT SERVER - with auto-open dashboard
+    async function U() {
+        try {
+            // Start the bot
+            await wt.post(`/api/server?server=${l}`);
+            
+            // Poll for bot to be ready
+            let isRunning = false;
+            for (let attempt = 0; attempt < 30; attempt++) {
+                await new Promise(r => setTimeout(r, 500));
+                
+                const response = await wt.get(`/api/running-servers`);
+                const botInfo = response.data[l];
+                
+                if (botInfo && botInfo.is_running) {
+                    isRunning = true;
+                    break;
+                }
+            }
+            
+            if (isRunning) {
+                // Auto-open dashboard!
+                const isDashboardAccessible = !window.location.hostname.includes('railway.app');
+                const dashboardUrl = isDashboardAccessible 
+                    ? `${window.location.protocol}//${window.location.hostname}:${s}`
+                    : `${window.location.origin}`;
+                
+                window.open(dashboardUrl, `_blank`);
+            }
+        } catch (error) {
+            console.error("Error starting bot server:", error);
+        }
     }
-}
+
     async function Z() {
         h("stop_server"), await wt(`${window.location.origin}/api/end_server`)
     }
@@ -15956,6 +15972,7 @@ function N() {
     function k() {
         v(!y)
     }
+
     return Le.useEffect(() => {
         f == "stop_server" && h("")
     }, [r]), K.jsxs("div", {
@@ -16008,7 +16025,7 @@ function N() {
                         className: "mr-2"
                     }), "Pop-up dashboard"]
                 }), K.jsxs("a", {
-                href: `${window.location.origin}` ,
+                    href: `${window.location.origin}`,
                     target: "_blank",
                     className: `${s?"":"opacity-50 pointer-events-none"} bg-zinc-600 whitespace-nowrap px-4 py-2 rounded-xl active:bg-blue-700 active:ring-blue-400 hover:ring ring-blue-600 ring-offset-2 ring-offset-zinc-700  hover:bg-blue-600 duration-200`,
                     children: [K.jsx(re, {
@@ -16067,6 +16084,3 @@ function N() {
         })]
     })
 }
-I1.createRoot(document.getElementById("root")).render(K.jsx(Le.StrictMode, {
-    children: K.jsx($4, {})
-}));
