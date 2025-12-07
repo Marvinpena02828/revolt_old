@@ -15943,9 +15943,18 @@ function N() {
         window.open(`${window.location.origin}`, `_blank`);
     }
 }
-    async function Z() {
-        h("stop_server"), await wt(`${window.location.origin}/api/end_server`)
+ async function Z() {
+    h("stop_server");
+    try {
+        // Changed from wt() to wt.post() and fixed the endpoint/params
+        await wt.post(`/api/server?server=${l}&action=stop`);
+        // Or if your API uses DELETE:
+        // await wt.delete(`/api/server?server=${l}`);
+    } catch (error) {
+        console.error("Failed to stop server:", error);
+        h(""); // Reset status on error
     }
+}
     async function q() {
         E(!0), setTimeout(async () => {
             await wt.delete(`/api/server?server=${l}`)
