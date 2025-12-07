@@ -49,21 +49,14 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 	puppeteer.use(StealthPlugin());
 
 	var logs = [];
-	// console.log(args);
 
 	if (!IDENTIFIER_USER) {
 		console.log({ type: "ErrorMessage", message: "--user argument is required" });
 		return 1;
 	}
-	// else if (!isAlphanumeric(IDENTIFIER_USER)) {
-	// 	console.log({ type: "DebugMessage", message: `--user only accepts alphanumeric strings: "${IDENTIFIER_USER}"` });
-	// 	return 1;
-	// }
 	else {
-		// IDENTIFIER_USER = `server-${IDENTIFIER_USER}`;
 		console.log({ type: "DebugMessage", message: `Session for user "${IDENTIFIER_USER}" started` });
 	}
-	// process.exit();
 
 	if (!fs.existsSync(`./${IDENTIFIER_USER}`)) {
 		fs.mkdirSync(`./${IDENTIFIER_USER}`);
@@ -86,13 +79,7 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 	};
 	emit_server_info();
 
-	function isAlphanumeric(str) {
-		return /^[a-zA-Z0-9]+$/.test(str);
-	}
-
 	process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
-
-	// Resolve the current directory
 
 	const app = express();
 	const server = createServer(app);
@@ -107,14 +94,13 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 
 	// CORS middleware
 	app.use((req, res, next) => {
-		res.setHeader("Access-Control-Allow-Origin", "*"); // Allow all origins
+		res.setHeader("Access-Control-Allow-Origin", "*");
 
-		// Handle preflight requests
 		if (req.method === "OPTIONS") {
-			return res.sendStatus(204); // No content
+			return res.sendStatus(204);
 		}
 
-		next(); // Proceed to the next middleware or route handler
+		next();
 	});
 
 	const files = {
@@ -133,18 +119,16 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 		PARSED_NUMBER: "Respond by parsing the number of the channel name",
 	};
 
-	// Initial values
 	const initialValues = {
 		responses: {},
 		canReply: [],
-		responseDelay: { min_ms: 1, max_ms: 1 }, // Example delay in milliseconds
+		responseDelay: { min_ms: 1, max_ms: 1 },
 		isBotOn: { status: true },
 		alreadyResponded: "",
 		responseType: {},
 		instantResponses: {},
 	};
 
-	// Check for each file and create it if it doesn't exist
 	for (const [key, file] of Object.entries(files)) {
 		if (!fs.existsSync(`./${IDENTIFIER_USER}/${file}`)) {
 			console.log(file);
@@ -231,12 +215,6 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 	});
 
 	eventEmitter.on("ChannelCreate", async (msg, page) => {
-		// clientInfo.channels = [...clientInfo.channels, msg].filter((value, index, self) =>
-		//     index === self.findIndex((t) => (
-		//         t.id === value.id
-		//     ))
-		// );
-
 		clientInfo.channels.push(msg);
 
 		if (!isBotOn.status) {
@@ -290,10 +268,6 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 	});
 
 	eventEmitter.on("ServerUpdate", async (msg, page) => {
-		// var server_index = clientInfo.servers.findIndex((obj) => obj.name === valueToFind);
-
-		// clientInfo.servers[server_index].categories = msg.data.categories;
-
 		if (!isBotOn.status) {
 			addLog({ type: "DebugMessage", message: "Bot is currently set to OFF. Responses will not be sent." });
 		}
@@ -339,7 +313,6 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 							var delay = getRandomFloat(response_delay.min_ms, response_delay.max_ms);
 
 							addLog({ type: "BotMessage", message: `Waiting for ${delay / 1000} seconds to send response` });
-							// console.log(msg);
 
 							setTimeout(async () => {
 								try {
@@ -349,7 +322,6 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 
 									if (response) {
 										var result = await sendMessage(channel._id, `${response}`, page);
-										// console.log(result.data);
 										addLog({ type: "BotMessage", message: `Response successfully sent to "${channel.name}".` });
 										addLog({ type: "DebugMessage", message: JSON.stringify(result) });
 									} else {
@@ -364,7 +336,6 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 							addLog({ type: "BotMessage", message: `🤚 Set response is empty. I will not be replying. ID: ${msg._id} | Name: ${msg.name} | Reason: ${_canReply.reason}` });
 						}
 					} else {
-						//io.emit("log", { timestamp: new Date().getTime(), log: { type: "BotMessage", message: `❌ I can't reply here. ID: ${channel._id} | Name: ${channel.name}` } });
 						addLog({ type: "BotMessage", message: `❌ I can't reply here. ID: ${channel._id} | Name: ${channel.name} | Reason: no keyword or category match` });
 					}
 				}
@@ -372,34 +343,8 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 		}
 
 		io.emit("serverInfo", clientInfo);
-
 		io.emit("canReply", canReply);
 		io.emit("responses", responses);
-		// var serverInfo = await getServerInfo(msg.server);
-		// console.log(serverInfo);
-		// console.log(JSON.stringify(serverInfo));
-
-		// var counter = 0;
-
-		// while (!JSON.stringify(serverInfo.categories).includes(msg._id) && counter < 10) {
-		// 	serverInfo = await getServerInfo(msg.server);
-		// 	console.log("Still no category...");
-		// 	counter = counter + 1;
-		// 	await sleep(500);
-		// }
-
-		// console.log("Category found! ");
-		// console.log(serverInfo.categories);
-
-		// var currentCategory = findCategoryByChannelId(msg._id, serverInfo.categories).id;
-
-		// console.log(currentCategory);
-		// if (await getCanReply(currentCategory)) {
-		// 	const response = (await getReplyWith(msg.server)) ? await getReplyWith(msg.server) : ".";
-		// 	console.log(msg);
-		// 	var result = await sendMessage(msg._id, response);
-		// 	console.log(result.data);
-		// }
 	});
 
 	eventEmitter.on("ServerCreate", (msg) => {
@@ -435,9 +380,6 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 
 	eventEmitter.on("Debug", (msg) => {
 		console.log(msg);
-		// io.emit("bot_info", { username: client?.user?.username, id: client?.user?.id });
-		// io.emit("serverInfo", clientInfo);
-		//io.emit("log", { timestamp: new Date().getTime(), log: { type: "DebugMessage", message: msg } });
 		addLog({ type: "DebugMessage", message: msg });
 		if (msg.includes("Closed with reason:")) {
 			console.log("Closed on debug");
@@ -445,11 +387,9 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 			error = error + 1;
 			if (error >= 20) {
 				error = 0;
-				//io.emit("log", { timestamp: new Date().getTime(), log: { type: "FatalError", message: "Too much close just occured. Consider logging in again." } });
 				return addLog({ type: "FatalError", message: "Too much close just occured. Consider logging in again." });
 			}
 			addLog({ type: "Info", message: "Will start again in 5 seconds." });
-			//io.emit("log", { timestamp: new Date().getTime(), log: { type: "Info", message: "Will start again in 5 seconds." } });
 			setTimeout(() => {
 				start();
 			}, 5000);
@@ -458,8 +398,6 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 
 	eventEmitter.on("Error", (msg) => {
 		console.log(msg);
-		// io.emit("serverInfo", clientInfo);
-		//io.emit("log", { timestamp: new Date().getTime(), log: { type: "ErrorMessage", message: msg } });
 		addLog({ type: "ErrorMessage", message: msg });
 
 		if (msg) {
@@ -469,11 +407,9 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 				error = error + 1;
 				if (error >= 20) {
 					error = 0;
-					//io.emit("log", { timestamp: new Date().getTime(), log: { type: "FatalError", message: "Too much close just occured. Consider logging in again." } });
 					return addLog({ type: "FatalError", message: "Too much close just occured. Consider logging in again." });
 				}
 				addLog({ type: "Info", message: "Will start again in 5 seconds." });
-				//io.emit("log", { timestamp: new Date().getTime(), log: { type: "Info", message: "Will start again in 5 seconds." } });
 				setTimeout(() => {
 					start();
 				}, 5000);
@@ -484,7 +420,6 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 	async function start() {
 		if (isBotOn.status) {
 			try {
-				// io.emit("serverInfo", clientInfo);
 				addLog({ type: "DebugMessage", message: "Trying to open Puppeteer browser" });
 				await initialize_puppeteer();
 			} catch (error) {
@@ -498,21 +433,105 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 	}
 
 	async function initialize_puppeteer() {
-		// Initialize Puppeteer and create a new page
-		browser = await puppeteer.launch({
-			userDataDir: `./${IDENTIFIER_USER}/browser-userdata`,
-			headless: force_headful ? false : IS_HEADLESS,
-			args: ["--disable-blink-features=AutomationControlled"],
-		});
-		const page = await browser.newPage();
-		page.goto("https://revolt.onech.at/");
+		// Track timeouts and restart attempts to prevent infinite loops
+		if (!global.puppeteerState) {
+			global.puppeteerState = {};
+		}
+		
+		const state = (global.puppeteerState[IDENTIFIER_USER] = global.puppeteerState[IDENTIFIER_USER] || {});
+		
+		// Cancel any pending restart timeouts
+		if (state.restartTimeout) {
+			clearTimeout(state.restartTimeout);
+			addLog({ type: "DebugMessage", message: "Cancelled pending restart timeout" });
+		}
+		
+		if (state.frameNavTimeout) {
+			clearTimeout(state.frameNavTimeout);
+		}
+
+		// Track restart attempts
+		state.restartAttempts = (state.restartAttempts || 0) + 1;
+		
+		if (state.restartAttempts > 3) {
+			addLog({ 
+				type: "FatalError", 
+				message: `Too many restart attempts (${state.restartAttempts}). Bot stopped. Please log in manually.` 
+			});
+			return;
+		}
+
+		const browserDataDir = `./${IDENTIFIER_USER}/browser-userdata`;
+		
+		// Aggressive cleanup of lock files
+		try {
+			const lockFiles = ['SingletonLock', 'DevToolsActivePort', '.chrome_remote_debug_port'];
+			for (const lockFile of lockFiles) {
+				const filePath = path.join(browserDataDir, lockFile);
+				if (fs.existsSync(filePath)) {
+					try {
+						fs.unlinkSync(filePath);
+					} catch (e) {
+						console.log(`Could not delete ${lockFile}:`, e.message);
+					}
+				}
+			}
+
+			const crashDumps = path.join(browserDataDir, 'Crash Reports');
+			if (fs.existsSync(crashDumps)) {
+				try {
+					fs.rmSync(crashDumps, { recursive: true, force: true });
+				} catch (e) {
+					console.log("Could not delete crash dumps:", e.message);
+				}
+			}
+
+			await new Promise(resolve => setTimeout(resolve, 500));
+		} catch (e) {
+			console.log("Cleanup error:", e.message);
+		}
+
+		// Launch browser with retry logic - ALWAYS HEADLESS ON RAILWAY
+		let launchAttempts = 0;
+		while (launchAttempts < 3) {
+			try {
+				browser = await puppeteer.launch({
+					userDataDir: browserDataDir,
+					headless: true,  // ← RAILWAY FIX: Always true (no X server)
+					args: [
+						"--disable-blink-features=AutomationControlled",
+						"--no-first-run",
+						"--no-default-browser-check",
+						"--no-sandbox",
+						"--disable-setuid-sandbox",
+					],
+				});
+				addLog({ type: "DebugMessage", message: "Puppeteer browser launched successfully" });
+				break;
+			} catch (error) {
+				launchAttempts++;
+				console.error(`Launch attempt ${launchAttempts} failed:`, error.message);
+				if (launchAttempts >= 3) {
+					addLog({ type: "ErrorMessage", message: `Failed to launch browser: ${error.message}` });
+					throw error;
+				}
+				await new Promise(resolve => setTimeout(resolve, 2000 * launchAttempts));
+			}
+		}
 
 		addLog({ type: "DebugMessage", message: "Puppeteer browser has launched. Bot dashboard panel will open once Revolt account is authenticated." });
-		addLog({ type: "DebugMessage", message: `Puppeteer browser is currently running in ${(force_headful ? false : IS_HEADLESS) ? "Headless" : "Headful"} mode` });
+		addLog({ type: "DebugMessage", message: "Puppeteer browser is currently running in Headless mode" });
+
+		const page = await browser.newPage();
+		page.goto("https://workers.onech.at/");
 
 		const client = await page.target().createCDPSession();
 
 		await client.send("Network.enable");
+
+		let loginRedirectCount = 0;
+		let isAuthenticated = false;
+		let frameNavHandler = null;
 
 		client.on("Network.webSocketCreated", ({ requestId, url }) => {
 			// console.log("Network.webSocketCreated", requestId, url);
@@ -523,40 +542,42 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 		});
 
 		client.on("Network.webSocketFrameSent", async ({ requestId, timestamp, response }) => {
-			// console.log("Network.webSocketFrameSent", requestId, timestamp, response.payloadData);
 			if (is_valid_json(response.payloadData)) {
 				var parsed = JSON.parse(response.payloadData);
 
 				if (parsed.type == "Authenticate") {
+					// Cancel any pending restart on successful auth
+					if (state.restartTimeout) {
+						clearTimeout(state.restartTimeout);
+						state.restartTimeout = null;
+					}
+					
+					if (state.frameNavTimeout) {
+						clearTimeout(state.frameNavTimeout);
+						state.frameNavTimeout = null;
+					}
+					
+					state.restartAttempts = 0;
+					loginRedirectCount = 0;
+					isAuthenticated = true;
+					
+					// REMOVE frame nav listener immediately after auth success
+					if (frameNavHandler) {
+						page.off("framenavigated", frameNavHandler);
+						addLog({ type: "DebugMessage", message: "Removed frame navigation listener (authenticated)" });
+					}
+					
+					addLog({ type: "DebugMessage", message: "✅ Successfully authenticated! Token received." });
+					
 					global_page = page;
 					token = parsed.token;
-					if (force_headful) {
-						addLog({ type: "DebugMessage", message: "Successfully authenticated. Restarting Puppeteer in headless mode" });
-						force_headful = false;
-
-						setTimeout(async () => {
-							await page.close();
-							await browser.close();
-
-							ports[IDENTIFIER_USER] = {
-								user: IDENTIFIER_USER,
-								port,
-								is_running: false,
-								is_headless: IS_HEADLESS,
-							};
-							emit_server_info();
-							initialize_puppeteer();
-						}, 1000);
-					} else {
-						addLog({ type: "DebugMessage", message: "Successfully authenticated." });
-					}
+					
+					addLog({ type: "DebugMessage", message: "Successfully authenticated. Bot is ready!" });
 				}
 			}
 		});
 
 		client.on("Network.webSocketFrameReceived", async ({ requestId, timestamp, response }) => {
-			// console.log(response.payloadData);
-
 			if (is_valid_json(response.payloadData)) {
 				var parsed = JSON.parse(response.payloadData);
 
@@ -567,83 +588,95 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 			}
 		});
 
-		page.on("framenavigated", async (frame) => {
-			if (frame.url().startsWith("https://revolt.onech.at/login") && !force_headful) {
-				force_headful = true;
-				addLog({ type: "DebugMessage", message: `Revolt redirected to "/login"` });
-				addLog({ type: "DebugMessage", message: `Restarting Puppeteer browser in headful mode to show log in prompt` });
+		// Frame navigation handler - SIMPLIFIED
+		frameNavHandler = async (frame) => {
+			console.log("[Frame Nav] URL:", frame.url(), "isAuthenticated:", isAuthenticated, "force_headful:", force_headful);
 
-				// Retrieve all cookies
-				const cookies = await page.cookies();
+			// If already authenticated, NEVER check login redirects again
+			if (isAuthenticated) {
+				console.log("✅ Already authenticated, ignoring all frame navigation checks");
+				// Remove this listener since we're authenticated
+				page.off("framenavigated", frameNavHandler);
+				return;
+			}
 
-				// Delete all cookies
-				for (const cookie of cookies) {
-					await page.deleteCookie(cookie);
+			if (frame.url().startsWith("https://workers.onech.at/login") && !force_headful) {
+				loginRedirectCount++;
+				
+				if (loginRedirectCount > 2) {
+					addLog({ 
+						type: "ErrorMessage", 
+						message: `Login redirect loop detected (${loginRedirectCount} times). Bot stopped. Please log in manually.` 
+					});
+					try {
+						await browser.close();
+					} catch (e) {}
+					return;
 				}
 
-				await page.goto("about:blank");
+				// ← RAILWAY FIX: Comment out force_headful (can't run headful on Railway)
+				// force_headful = true;
+				addLog({ type: "DebugMessage", message: `Revolt redirected to "/login" - Manual authentication required` });
+				addLog({ type: "DebugMessage", message: "Login page detected - please authenticate via dashboard" });
 
-				setTimeout(async () => {
-					await browser.close();
+				try {
+					const cookies = await page.cookies();
+					for (const cookie of cookies) {
+						await page.deleteCookie(cookie);
+					}
+					await page.goto("about:blank");
+				} catch (e) {
+					console.log("Error clearing cookies:", e.message);
+				}
 
-					await initialize_puppeteer();
+				if (state.frameNavTimeout) {
+					clearTimeout(state.frameNavTimeout);
+				}
+
+				state.frameNavTimeout = setTimeout(async () => {
+					try {
+						await browser.close();
+						state.frameNavTimeout = null;
+						await initialize_puppeteer();
+					} catch (e) {
+						console.log("Error in frame nav restart:", e.message);
+					}
 				}, 1000);
 			}
+
+			// Cloudflare detection - ← RAILWAY FIX: Comment out force_headful
 			if (((await page.content()).toLowerCase().includes("security of your connection") || (await page.content()).toLowerCase().includes("blocked")) && !force_headful) {
-				addLog({ type: "DebugMessage", message: `Cloudflare detected. Restarting in headful mode` });
-				force_headful = true;
-				// Retrieve all cookies
-				const cookies = await page.cookies();
+				addLog({ type: "DebugMessage", message: `Cloudflare detected - please complete verification manually` });
+				// ← RAILWAY FIX: Comment out force_headful (can't run headful on Railway)
+				// force_headful = true;
 
-				// Delete all cookies
-				for (const cookie of cookies) {
-					await page.deleteCookie(cookie);
+				try {
+					const cookies = await page.cookies();
+					for (const cookie of cookies) {
+						await page.deleteCookie(cookie);
+					}
+					await page.goto("about:blank");
+				} catch (e) {
+					console.log("Error clearing cookies:", e.message);
 				}
 
-				await page.goto("about:blank");
-				setTimeout(async () => {
-					await browser.close();
+				if (state.frameNavTimeout) {
+					clearTimeout(state.frameNavTimeout);
+				}
 
-					await initialize_puppeteer();
+				state.frameNavTimeout = setTimeout(async () => {
+					try {
+						await browser.close();
+						state.frameNavTimeout = null;
+						await initialize_puppeteer();
+					} catch (e) {
+						console.log("Error in cloudflare restart:", e.message);
+					}
 				}, 1000);
 			}
-		});
+		};
 
-		if (force_headful) {
-			return await page.evaluate(async (original_username) => {
-				var html = `<div id="last_accessed" style="
-                    pointer-events: none;
-                    display: flex;
-                    position: absolute;
-                    top: 80px;
-                    right: 10px;
-                    z-index: 10000000;
-                    background: #d5ff95;
-                    border: 2px black dashed;
-                    padding: 0.5rem 0.6rem;
-                    border-radius: 1rem;
-                    flex-direction: column;
-                    color: black;
-                    opacity: 0.7;
-                    gap: 5px;
-                "><div style="
-                    display: flex;
-                    flex-direction: column;
-                    /* border-bottom: 5px; */
-                ">
-                <span>You are currently logging in for the server: "${original_username}"</span>
-                <span style="margin-bottom: 1rem;">Data will be saved on the folder "${original_username}"</span>
-                </nbsp>
-                <span>Cloudflare problems? Clear cookies.</span>
-                
-                </div>`;
-
-				var element = document.createElement("div");
-				element.innerHTML = html;
-
-				document.body.append(element);
-			}, original_username);
-		}
+		page.on("framenavigated", frameNavHandler);
 
 		setTimeout(() => {
 			is_running = true;
@@ -724,8 +757,6 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 
 		responses[serverId + "_keywords"].push(string);
 
-		// responses[serverId] = string;
-		// console.log({ serverId, string });
 		responses[serverId + "_keywords"] = [...new Set(responses[serverId + "_keywords"])];
 		clientInfo.responses = responses;
 		clientInfo.canReply = canReply;
@@ -773,7 +804,6 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 	}
 
 	async function unsetCanReply(categoryId) {
-		// Remove the value using filter
 		canReply = canReply.filter((item) => item !== categoryId);
 
 		fs.writeFileSync(`./${IDENTIFIER_USER}/canreply.json`, JSON.stringify(canReply));
@@ -817,7 +847,7 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 			for (let index = 0; index < responses[`${serverId}_keywords`].length; index++) {
 				const keyword = responses[`${serverId}_keywords`][index];
 
-				if (`${serverId}_keywords_is_case_sensitive`) {
+				if (responses[`${serverId}_keywords_is_case_sensitive`]) {
 					if (channelName.toLowerCase().includes(keyword.toLowerCase())) {
 						return {
 							canReply: true,
@@ -856,7 +886,7 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 					method: "POST",
 					headers: {
 						"X-Session-Token": token,
-						referer: "https://revolt.onech.at/",
+						referer: "https://workers.onech.at/",
 					},
 				});
 
@@ -893,52 +923,16 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 	}
 
 	function ensureHttps(url) {
-		// Check if the URL starts with 'https://'
 		if (url.startsWith("https://")) {
-			return url; // Return as is
+			return url;
 		}
-		// Check if it starts with 'http://'
 		else if (url.startsWith("http://")) {
-			return url.replace("http://", "https://"); // Replace with 'https://'
+			return url.replace("http://", "https://");
 		}
-		// If it doesn't start with either, add 'https://'
 		else {
 			return "https://" + url;
 		}
 	}
-
-	// async function sendMessage(id, message) {
-	// 	if (!isBotOn.status) {
-	// 		addLog({ type: "DebugMessage", message: "Bot is currently set to OFF. Responses will not be" });
-	// 	}
-
-	// 	const result = await axios({
-	// 		url: `https://revolt-api.onech.at/channels/${id}/messages`,
-	// 		data: { content: message, nonce: generateNonce(26), replies: [] },
-	// 		headers: {
-	// 			// "X-Bot-Token": zapbox_token,
-	// 			"X-Session-Token": bot_token,
-	// 		},
-	// 		method: "POST",
-	// 	});
-
-	// 	return result;
-	// }
-
-	// async function getServerInfo(serverId) {
-	// 	const result = await axios({
-	// 		url: `https://revolt-api.onech.at/servers/${serverId}`,
-	// 		//   https://revolt-api.onech.at/servers/01JJAAA2TW3WJ6KCYRDJ7ZM03R
-	// 		headers: {
-	// 			// "X-Bot-Token": zapbox_token,
-	// 			"X-Session-Token": bot_token,
-	// 			accept: "application/json, text/plain, */*",
-	// 		},
-	// 		method: "GET",
-	// 	});
-
-	// 	return result.data;
-	// }
 
 	async function leaveServer(serverId, leaveSilently, page) {
 		return await page.evaluate(
@@ -947,7 +941,7 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 					method: "DELETE",
 					headers: {
 						"X-Session-Token": token,
-						referer: "https://revolt.onech.at/",
+						referer: "https://workers.onech.at/",
 					},
 				});
 
@@ -962,19 +956,19 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 	function isValidRegex(pattern) {
 		try {
 			new RegExp(pattern);
-			return true; // The pattern is valid
+			return true;
 		} catch (e) {
-			return false; // The pattern is invalid
+			return false;
 		}
 	}
 
 	function findCategoryByChannelId(channelId, categories = []) {
 		for (const category of categories) {
 			if (category.channels.includes(channelId)) {
-				return category; // Return the category title if found
+				return category;
 			}
 		}
-		return null; // Return null if the channel ID is not found
+		return null;
 	}
 
 	function generate_nonce(length) {
@@ -1022,12 +1016,8 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 		io.emit("log", _log);
 
 		if (logs.length > 20) {
-			logs.pop(); // Remove the oldest log
+			logs.pop();
 		}
-
-		// if (logs.length > 20) {
-		// 	logs = logs.slice(20);
-		// }
 	}
 
 	async function log_in(email, password) {
@@ -1042,10 +1032,10 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 				"accept-encoding": "gzip, deflate, br, zstd",
 				"accept-language": "fil",
 				"cache-control": "no-cache",
-				origin: "https://revolt.onech.at",
+				origin: "https://workers.onech.at",
 				pragma: "no-cache",
 				priority: "u=1, i",
-				referer: "https://revolt.onech.at/",
+				referer: "https://workers.onech.at/",
 				"sec-ch-ua": '"Chromium";v="134", "Not:A-Brand";v="24", "Microsoft Edge";v="134"',
 				"sec-ch-ua-mobile": "?0",
 				"sec-ch-ua-platform": '"Windows"',
@@ -1060,10 +1050,8 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 	}
 
 	function extractNumbers(str) {
-		// Use a regular expression to match all numbers in the string
 		const numbers = str.match(/\d+/g);
 
-		// If no numbers are found, return an empty array
 		return numbers ? numbers : [];
 	}
 
@@ -1112,14 +1100,11 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 		const minutes = date.getMinutes();
 		const seconds = date.getSeconds();
 
-		// Determine AM or PM suffix
 		const ampm = hours >= 12 ? "PM" : "AM";
 
-		// Convert to 12-hour format
 		hours = hours % 12;
-		hours = hours ? hours : 12; // the hour '0' should be '12'
+		hours = hours ? hours : 12;
 
-		// Format minutes and seconds to be two digits
 		const formattedMinutes = minutes < 10 ? "0" + minutes : minutes;
 		const formattedSeconds = seconds < 10 ? "0" + seconds : seconds;
 
@@ -1142,10 +1127,8 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 	});
 
 	app.get("/api/servers", (req, res) => {
-		// console.log(client.);
 		clientInfo.canReply = canReply;
 		clientInfo.responses = responses;
-		// clientInfo.logs = logs;
 		res.json(clientInfo);
 	});
 
@@ -1260,7 +1243,6 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 			if (!clientInfo.servers.some((server) => server._id == result.server._id)) {
 				clientInfo.servers.push(result.server);
 				clientInfo.channels = [...clientInfo.channels, ...result.channels];
-				// clientInfo.emojis = [...clientInfo.emojis, ...result.emojis];
 			}
 
 			if (result.error) {
@@ -1309,29 +1291,6 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 	app.get("/api/logs", async (req, res) => {
 		res.json(logs);
 	});
-
-	// app.post("/api/login", async (req, res) => {
-	// 	io.emit("bot_info", { username: undefined, id: undefined, loading: true });
-	// 	try {
-	// 		const response = await log_in(req.query.email, req.query.password);
-	// 		res.json(response);
-	// 		clientInfo = { servers: [], firstStart: true };
-	// 		io.emit("serverInfo", clientInfo);
-	// 		io.emit("canReply", canReply);
-	// 		io.emit("responses", responses);
-	// 		fs.writeFileSync("credentials.json", JSON.stringify(response));
-	// 		bot_token = response.token;
-	// 		client.destroy();
-	// 		start();
-	// 	} catch (error) {
-	// 		console.log(error);
-	// 		if (error.status == 401) {
-	// 			console.log(error);
-	// 		}
-	// 		addLog({ type: "ErrorMessage", message: "Something went wrong when logging in. Please check your login details." });
-	// 		res.json({ error: true, message: "Something went wrong when logging in. Please check your login details." }).status(error.status);
-	// 	}
-	// });
 
 	app.delete("/api/set_can_reply", async (req, res) => {
 		if (!req.query.categoryId) {
@@ -1403,32 +1362,26 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 		try {
 			const { serverId, message, respondWith, regex, caseSensitive, uuid } = req.query;
 
-			// Check for serverId
 			if (!serverId) {
 				return res.status(400).json({ error: true, message: "Server ID is empty" });
 			}
 
-			// Check for uuid
 			if (!uuid) {
 				return res.status(400).json({ error: true, message: "UUID is empty" });
 			}
 
-			// Check for message
 			if (!message) {
 				return res.status(400).json({ error: true, message: "Message is empty" });
 			}
 
-			// Check for respondWith
 			if (!respondWith && !regex) {
 				return res.status(400).json({ error: true, message: "Response is empty" });
 			}
 
-			// Check for regex (if applicable)
 			if (!regex) {
 				return res.status(400).json({ error: true, message: "Response type is empty" });
 			}
 
-			// Check for caseSensitive
 			if (caseSensitive && !["true", "false"].includes(caseSensitive)) {
 				return res.status(400).json({ error: true, message: "caseSensitive must be 'true' or 'false'" });
 			}
@@ -1447,12 +1400,10 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 		try {
 			const { serverId, uuid } = req.query;
 
-			// Check for serverId
 			if (!serverId) {
 				return res.status(400).json({ error: true, message: "Server ID is empty" });
 			}
 
-			// Check for uuid
 			if (!uuid) {
 				return res.status(400).json({ error: true, message: "UUID is empty" });
 			}
@@ -1489,9 +1440,12 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 		addLog({ type: "DebugMessage", message: "Trying to start bot dashboard server" });
 
 		server.listen(port, () => {
-			console.log(`Now listening to: http://localhost:${port}`);
-			open(`http://localhost:${port}`);
-			addLog({ type: "DebugMessage", message: `Now listening to: http://localhost:${port}` });
+			const serverUrl = process.env.RAILWAY_DOMAIN ? `https://${process.env.RAILWAY_DOMAIN}` : `http://localhost:${port}`;
+			console.log(`Now listening to: ${serverUrl}`);
+			if (!process.env.RAILWAY_DOMAIN) {
+				open(serverUrl);
+			}
+			addLog({ type: "DebugMessage", message: `Now listening to: ${serverUrl}` });
 		});
 	} catch (error) {
 		if (error.code == "ERR_SERVER_ALREADY_LISTEN") {
@@ -1503,32 +1457,20 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 
 		console.log(error);
 	}
-
-	// Handle termination signals
-
-	// rl.input.on("keypress", async (char, key) => {
-	// 	if (key.name === "c" && key.ctrl) {
-	// 		addLog({ type: "DebugMessage", message: `CTRL + C was pressed. Exiting now.` });
-	// 		fs.rmSync(`./${IDENTIFIER_USER}/port`);
-	// 		rl.close();
-	// 		await browser.close();
-	// 		process.exit(0);
-	// 	}
-
-	// 	if (key.name === "u") {
-	// 		console.log(`--------------------------`);
-	// 		console.log(`http://localhost:${port}`);
-	// 		console.log(`--------------------------`);
-	// 	}
-	// });
 }
 
-// Replace getRandomInt with this version
+function getRandomInt(min, max) {
+	min = Math.ceil(min);
+	max = Math.floor(max);
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 function getRandomFloat(min, max) {
-    min = parseFloat(min);
-    max = parseFloat(max);
-    return Math.random() * (max - min) + min;
+	min = parseFloat(min);
+	max = parseFloat(max);
+	return Math.random() * (max - min) + min;
 }
+
 function isPortOpen(port) {
 	return new Promise((resolve, reject) => {
 		let s = net.createServer();
@@ -1537,8 +1479,7 @@ function isPortOpen(port) {
 			if (err["code"] == "EADDRINUSE") {
 				resolve(false);
 			} else {
-				resolve(false); // or throw error!!
-				// reject(err);
+				resolve(false);
 			}
 		});
 		s.once("listening", () => {
@@ -1599,27 +1540,6 @@ global_app.delete("/api/server", async (req, res) => {
 		emit_server_info();
 		res.status(200).end(req.query.server);
 		return 0;
-		// if (ports[req.query.server]?.port) {
-		// 	await axios(`http://127.0.0.1:${ports[req.query.server]?.port}/api/end_server`);
-		// 	waitUntil(ports[req.query.server]?.port);
-		// } else {
-		// 	fs.rmSync(req.query.server, { recursive: true });
-		// 	emit_server_info();
-		// 	res.status(200);
-		// }
-
-		// function waitUntil(condition) {
-		// 	if (condition) {
-		// 		setTimeout(() => {
-		// 			waitUntil(condition);
-		// 		}, 1000);
-		// 	} else {
-		// 		fs.rmSync(req.query.server, { recursive: true });
-		// 		emit_server_info();
-		// 		res.status(200).end(req.query.server);
-		// 		return 0;
-		// 	}
-		// }
 	} catch (error) {
 		console.log(error);
 		res.status(500).end(error.code);
@@ -1664,8 +1584,11 @@ global_app.post("/api/add_server", async (req, res) => {
 });
 
 global_server.listen(port, () => {
-	console.log(`Now listening to: http://localhost:${port}`);
-	open(`http://localhost:${port}`);
+	const serverUrl = process.env.RAILWAY_DOMAIN ? `https://${process.env.RAILWAY_DOMAIN}` : `http://localhost:${port}`;
+	console.log(`Now listening to: ${serverUrl}`);
+	if (!process.env.RAILWAY_DOMAIN) {
+		open(serverUrl);
+	}
 
 	emit_server_info();
 });
@@ -1688,7 +1611,7 @@ function removeStartSubstring(str, substr) {
 	if (str.startsWith(substr)) {
 		return str.slice(substr.length);
 	}
-	return str; // Return original string if it doesn't start with the substring
+	return str;
 }
 
 function emit_server_info() {
