@@ -1583,41 +1583,6 @@ global_app.post("/api/add_server", async (req, res) => {
 	emit_server_info();
 });
 
-// ADD THIS CODE to puppeteer_revolt.js 
-// Place it AFTER the global_app.post("/api/add_server", ...) block
-// Around line 1760+
-
-// Stop a bot server endpoint
-global_app.post("/api/stop_server", async (req, res) => {
-	if (!req.query.server) {
-		return res.status(400).json({ error: true, message: "Server is required" });
-	}
-
-	try {
-		const folderName = req.query.server;
-		const server = ports[folderName];
-		
-		if (!server) {
-			return res.status(404).json({ error: true, message: "Server not found" });
-		}
-
-		// Mark as not running
-		server.is_running = false;
-		ports[folderName] = server;
-		
-		emit_server_info();
-		
-		res.json({ 
-			error: false, 
-			message: `Bot server ${folderName} stopped` 
-		});
-		
-	} catch (error) {
-		console.error("Error stopping bot:", error);
-		res.status(500).json({ error: true, message: error.message });
-	}
-});
-
 global_server.listen(port, () => {
 	const serverUrl = process.env.RAILWAY_DOMAIN ? `https://${process.env.RAILWAY_DOMAIN}` : `http://localhost:${port}`;
 	console.log(`Now listening to: ${serverUrl}`);
