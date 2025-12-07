@@ -15927,55 +15927,86 @@ async function U() {
     E(!0); // Set loading state
     h("start_server"); // Set status
     
+    console.log("🟡 START: Attempting to start bot server:", { folder: l, username: i });
+    
     try {
-        // Start the server
-        await wt.post(`/api/server?server=${l}`);
+        // Step 1: Send start request
+        console.log("📤 Sending POST request to /api/server?server=" + l);
+        const startResponse = await wt.post(`/api/server?server=${l}`);
+        console.log("✅ Start request successful:", startResponse.data);
         
         // Detect if we're on Railway
         const isRailway = window.location.hostname.includes('railway.app');
+        console.log("🌐 Environment:", isRailway ? "Railway" : "Local");
         
-        // Poll for bot to be ready
+        // Step 2: Poll for bot to be ready
+        console.log("⏳ Polling for server status (max 60 seconds)...");
         let isRunning = false;
         for (let attempt = 0; attempt < 60; attempt++) {
             await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second between checks
             
             try {
+                console.log(`📡 Poll attempt ${attempt + 1}/60...`);
                 const response = await wt.get(`/api/running-servers`);
-                const serverData = response.data[l] || response.data.find(s => s.folder === l);
+                console.log(`📊 API Response:`, response.data);
+                
+                // Try multiple ways to find the server
+                let serverData = response.data[l]; // Direct key access
+                if (!serverData && Array.isArray(response.data)) {
+                    serverData = response.data.find(s => s.folder === l); // Array search
+                }
+                if (!serverData && typeof response.data === 'object') {
+                    serverData = Object.values(response.data).find(s => s?.folder === l); // Object values search
+                }
+                
+                console.log(`🔍 Server data found:`, serverData);
                 
                 if (serverData && serverData.is_running) {
+                    console.log("✅ Server is running!");
                     isRunning = true;
                     h(""); // Clear status
                     break;
+                } else {
+                    console.log(`⏳ Server not ready yet. Status:`, serverData?.is_running);
                 }
             } catch (error) {
-                console.log(`Polling attempt ${attempt + 1} failed:`, error);
+                console.log(`❌ Poll attempt ${attempt + 1} failed:`, error.message);
             }
         }
         
+        // Step 3: Navigate to dashboard
         if (isRunning) {
             const dashboardUrl = `${window.location.origin}?server=${i}`;
+            console.log("🎉 Server ready! Navigating to:", dashboardUrl);
             
             if (isRailway) {
-                // On Railway: Direct navigation (window.open is blocked)
-                console.log("Railway detected - navigating to dashboard...");
+                // On Railway: Direct navigation
+                console.log("🚀 Railway detected - using direct navigation");
                 window.location.href = dashboardUrl;
             } else {
                 // Locally: Try popup first, fallback to navigation
+                console.log("💻 Local environment - trying popup");
                 const popup = window.open(dashboardUrl, `${i}-dashboard`, "width=1000,height=800");
                 if (!popup) {
-                    // Popup blocked - fallback to navigation
-                    console.log("Popup blocked - navigating instead...");
+                    console.log("⚠️ Popup blocked - fallback to navigation");
                     window.location.href = dashboardUrl;
                 }
             }
         } else {
-            console.warn("Bot server failed to start within timeout period");
-            h(""); // Clear status
+            console.warn("❌ Bot server failed to start within 60 second timeout");
+            h("timeout"); // Set status
+            setTimeout(() => h(""), 3000); // Clear after 3 seconds
         }
     } catch (error) {
-        console.error("Error starting server:", error);
-        h(""); // Clear status on error
+        console.error("❌ ERROR starting server:", error);
+        console.error("Error details:", {
+            message: error.message,
+            code: error.code,
+            status: error.response?.status,
+            data: error.response?.data
+        });
+        h("error"); // Set error status
+        setTimeout(() => h(""), 3000); // Clear after 3 seconds
     }
     
     E(!1); // Clear loading state
