@@ -15924,9 +15924,26 @@ function N() {
         window.open(dashboardUrl, `@${i} - revolt bot server`, "width=600,height=400")
     }
 }
-    async function U() {
-        await wt.post(`/api/server?server=${l}`)
+ async function U() {
+    await wt.post(`/api/server?server=${l}`);
+    
+    // Poll for bot to be ready
+    let isRunning = false;
+    for (let i = 0; i < 30; i++) {
+        await new Promise(r => setTimeout(r, 500));
+        
+        const servers = await wt.get(`/api/running-servers`);
+        if (servers.data[l]?.is_running) {
+            isRunning = true;
+            break;
+        }
     }
+    
+    if (isRunning) {
+        // Auto-open dashboard!
+        window.open(`${window.location.origin}`, `_blank`);
+    }
+}
     async function Z() {
         h("stop_server"), await wt(`${window.location.origin}/api/end_server`)
     }
