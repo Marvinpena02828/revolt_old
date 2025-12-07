@@ -13086,7 +13086,7 @@ const W0 = {
     Ao = typeof navigator == "object" && navigator || void 0,
     ES = Zo && (!Ao || ["ReactNative", "NativeScript", "NS"].indexOf(Ao.product) < 0),
     AS = typeof WorkerGlobalScope < "u" && self instanceof WorkerGlobalScope && typeof self.importScripts == "function",
-    _S = Zo && window.location.href || "http://localhost",
+    _S = Zo && window.location.origin || "${window.location.origin}",
     TS = Object.freeze(Object.defineProperty({
         __proto__: null,
         hasBrowserEnv: Zo,
@@ -15910,9 +15910,10 @@ function I4({
 }) {
     const [f, h] = Le.useState(""), [y, v] = Le.useState(!1), [p, E] = Le.useState(!1);
 
-    function N() {
-        window.open(`http://localhost:${s}`, `@${i} - revolt bot server`, "width=600,height=400")
-    }
+ function N() {
+    const dashboardUrl = `${window.location.protocol}//${window.location.hostname}:${s}`;
+    window.open(dashboardUrl, `@${i} - revolt bot server`, "width=600,height=400")
+}
     async function U() {
         await wt.post(`/api/server?server=${l}`)
     }
