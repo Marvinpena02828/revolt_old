@@ -15923,90 +15923,102 @@ function N() {
         window.open(dashboardUrl, `@${i} - revolt bot server`, "width=600,height=400")
     }
 }
+// ========== FINAL CORRECTED U() FUNCTION ==========
 async function U() {
     E(!0); // Set loading state
     h("start_server"); // Set status
     
-    console.log("🟡 START: Attempting to start bot server:", { folder: l, username: i });
+    console.log("🟡 START: Bot server starting");
+    console.log("   Folder:", l);
+    console.log("   Username:", i);
     
     try {
         // Step 1: Send start request
-        console.log("📤 Sending POST request to /api/server?server=" + l);
+        console.log("📤 POST /api/server?server=" + l);
         const startResponse = await wt.post(`/api/server?server=${l}`);
-        console.log("✅ Start request successful:", startResponse.data);
+        console.log("✅ Start request successful");
         
-        // Detect if we're on Railway
+        // Detect environment
         const isRailway = window.location.hostname.includes('railway.app');
         console.log("🌐 Environment:", isRailway ? "Railway" : "Local");
         
-        // Step 2: Poll for bot to be ready
-        console.log("⏳ Polling for server status (max 60 seconds)...");
+        // Step 2: Wait 2 seconds for server to start
+        console.log("⏳ Waiting 2 seconds for server to boot...");
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Step 3: Poll for server status
+        console.log("📡 Polling for server status (max 60 seconds)");
         let isRunning = false;
+        
         for (let attempt = 0; attempt < 60; attempt++) {
-            await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second between checks
-            
             try {
-                console.log(`📡 Poll attempt ${attempt + 1}/60...`);
                 const response = await wt.get(`/api/running-servers`);
-                console.log(`📊 API Response:`, response.data);
+                const allServers = response.data;
                 
-                // Try multiple ways to find the server
-                let serverData = response.data[l]; // Direct key access
-                if (!serverData && Array.isArray(response.data)) {
-                    serverData = response.data.find(s => s.folder === l); // Array search
+                // Key insight: The API response uses FOLDER NAME as the key
+                // So we need to look up using the FOLDER (l variable)
+                const serverData = allServers[l];
+                
+                if (attempt % 5 === 0) { // Log every 5 attempts to reduce noise
+                    console.log(`   [${attempt + 1}/60] Checking folder '${l}'...`);
                 }
-                if (!serverData && typeof response.data === 'object') {
-                    serverData = Object.values(response.data).find(s => s?.folder === l); // Object values search
-                }
                 
-                console.log(`🔍 Server data found:`, serverData);
-                
-                if (serverData && serverData.is_running) {
-                    console.log("✅ Server is running!");
+                if (serverData && serverData.is_running === true) {
+                    console.log("   ✅ SERVER IS RUNNING!");
+                    console.log("   Details:", serverData);
                     isRunning = true;
                     h(""); // Clear status
                     break;
+                } else if (serverData) {
+                    console.log(`   Status: is_running=${serverData.is_running}`);
                 } else {
-                    console.log(`⏳ Server not ready yet. Status:`, serverData?.is_running);
+                    console.log(`   ⚠️ Server folder '${l}' not found yet`);
                 }
-            } catch (error) {
-                console.log(`❌ Poll attempt ${attempt + 1} failed:`, error.message);
+                
+                // Wait before next attempt
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+            } catch (pollError) {
+                console.log(`   ❌ Polling error: ${pollError.message}`);
+                await new Promise(resolve => setTimeout(resolve, 1000));
             }
         }
         
-        // Step 3: Navigate to dashboard
+        // Step 4: Navigate to dashboard
         if (isRunning) {
+            console.log("✅ Server confirmed running - navigating to dashboard");
+            
+            // Build dashboard URL with USERNAME (i), not folder
             const dashboardUrl = `${window.location.origin}?server=${i}`;
-            console.log("🎉 Server ready! Navigating to:", dashboardUrl);
+            console.log("🚀 Dashboard URL:", dashboardUrl);
             
             if (isRailway) {
-                // On Railway: Direct navigation
-                console.log("🚀 Railway detected - using direct navigation");
+                // On Railway: Use direct navigation
+                console.log("   → Using direct navigation (Railway)");
                 window.location.href = dashboardUrl;
             } else {
-                // Locally: Try popup first, fallback to navigation
-                console.log("💻 Local environment - trying popup");
+                // Locally: Try popup, fallback to navigation
+                console.log("   → Trying popup window");
                 const popup = window.open(dashboardUrl, `${i}-dashboard`, "width=1000,height=800");
                 if (!popup) {
-                    console.log("⚠️ Popup blocked - fallback to navigation");
+                    console.log("   → Popup blocked, falling back to navigation");
                     window.location.href = dashboardUrl;
                 }
             }
         } else {
-            console.warn("❌ Bot server failed to start within 60 second timeout");
-            h("timeout"); // Set status
-            setTimeout(() => h(""), 3000); // Clear after 3 seconds
+            console.warn("❌ Server failed to start within 60 seconds");
+            h("timeout");
+            setTimeout(() => h(""), 3000);
         }
+        
     } catch (error) {
-        console.error("❌ ERROR starting server:", error);
-        console.error("Error details:", {
-            message: error.message,
-            code: error.code,
-            status: error.response?.status,
-            data: error.response?.data
-        });
-        h("error"); // Set error status
-        setTimeout(() => h(""), 3000); // Clear after 3 seconds
+        console.error("❌ ERROR:", error.message);
+        if (error.response) {
+            console.error("   HTTP Status:", error.response.status);
+            console.error("   Response:", error.response.data);
+        }
+        h("error");
+        setTimeout(() => h(""), 3000);
     }
     
     E(!1); // Clear loading state
