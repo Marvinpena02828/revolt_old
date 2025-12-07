@@ -15923,7 +15923,7 @@ function N() {
         window.open(dashboardUrl, `@${i} - revolt bot server`, "width=600,height=400")
     }
 }
-// ========== FINAL CORRECTED U() FUNCTION ==========
+// ========== SIMPLIFIED U() FUNCTION - NO API POLLING ==========
 async function U() {
     E(!0); // Set loading state
     h("start_server"); // Set status
@@ -15937,82 +15937,39 @@ async function U() {
         console.log("📤 POST /api/server?server=" + l);
         const startResponse = await wt.post(`/api/server?server=${l}`);
         console.log("✅ Start request successful");
+        console.log("Response:", startResponse.data);
         
         // Detect environment
         const isRailway = window.location.hostname.includes('railway.app');
-        console.log("🌐 Environment:", isRailway ? "Railway" : "Local");
+        console.log("🌐 Environment:", isRailway ? "🚂 Railway" : "💻 Localhost");
         
-        // Step 2: Wait 2 seconds for server to start
-        console.log("⏳ Waiting 2 seconds for server to boot...");
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Step 2: Instead of polling /api/running-servers, just wait and navigate
+        // The server should start within a few seconds
+        const waitTime = isRailway ? 5000 : 3000;
+        console.log(`⏳ Waiting ${waitTime}ms for server to boot...`);
         
-        // Step 3: Poll for server status
-        console.log("📡 Polling for server status (max 60 seconds)");
-        let isRunning = false;
+        h(""); // Clear status immediately
         
-        for (let attempt = 0; attempt < 60; attempt++) {
-            try {
-                const response = await wt.get(`/api/running-servers`);
-                const allServers = response.data;
-                
-                // Key insight: The API response uses FOLDER NAME as the key
-                // So we need to look up using the FOLDER (l variable)
-                const serverData = allServers[l];
-                
-                if (attempt % 5 === 0) { // Log every 5 attempts to reduce noise
-                    console.log(`   [${attempt + 1}/60] Checking folder '${l}'...`);
-                }
-                
-                if (serverData && serverData.is_running === true) {
-                    console.log("   ✅ SERVER IS RUNNING!");
-                    console.log("   Details:", serverData);
-                    isRunning = true;
-                    h(""); // Clear status
-                    break;
-                } else if (serverData) {
-                    console.log(`   Status: is_running=${serverData.is_running}`);
-                } else {
-                    console.log(`   ⚠️ Server folder '${l}' not found yet`);
-                }
-                
-                // Wait before next attempt
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-            } catch (pollError) {
-                console.log(`   ❌ Polling error: ${pollError.message}`);
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-        }
+        // Prepare dashboard URL
+        const dashboardUrl = `${window.location.origin}?server=${i}`;
+        console.log("🚀 Will navigate to:", dashboardUrl);
         
-        // Step 4: Navigate to dashboard
-        if (isRunning) {
-            console.log("✅ Server confirmed running - navigating to dashboard");
-            
-            // Build dashboard URL with USERNAME (i), not folder
-            const dashboardUrl = `${window.location.origin}?server=${i}`;
-            console.log("🚀 Dashboard URL:", dashboardUrl);
-            
+        // Wait then navigate
+        setTimeout(() => {
+            console.log("→ Navigating now...");
             if (isRailway) {
-                // On Railway: Use direct navigation
-                console.log("   → Using direct navigation (Railway)");
                 window.location.href = dashboardUrl;
             } else {
-                // Locally: Try popup, fallback to navigation
-                console.log("   → Trying popup window");
                 const popup = window.open(dashboardUrl, `${i}-dashboard`, "width=1000,height=800");
                 if (!popup) {
-                    console.log("   → Popup blocked, falling back to navigation");
+                    console.log("   Popup blocked, using direct navigation");
                     window.location.href = dashboardUrl;
                 }
             }
-        } else {
-            console.warn("❌ Server failed to start within 60 seconds");
-            h("timeout");
-            setTimeout(() => h(""), 3000);
-        }
+        }, waitTime);
         
     } catch (error) {
-        console.error("❌ ERROR:", error.message);
+        console.error("❌ ERROR starting server:", error.message);
         if (error.response) {
             console.error("   HTTP Status:", error.response.status);
             console.error("   Response:", error.response.data);
