@@ -15931,7 +15931,10 @@ async function U() {
         // Start the server
         await wt.post(`/api/server?server=${l}`);
         
-        // Poll for bot to be ready (increased timeout to 60 seconds)
+        // Detect if we're on Railway
+        const isRailway = window.location.hostname.includes('railway.app');
+        
+        // Poll for bot to be ready
         let isRunning = false;
         for (let attempt = 0; attempt < 60; attempt++) {
             await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second between checks
@@ -15951,12 +15954,21 @@ async function U() {
         }
         
         if (isRunning) {
-            // Auto-open dashboard in new tab
             const dashboardUrl = `${window.location.origin}?server=${i}`;
-            window.open(dashboardUrl, `${i}-dashboard`, "width=1000,height=800");
             
-            // Optional: Also navigate current window
-            // window.location.href = dashboardUrl;
+            if (isRailway) {
+                // On Railway: Direct navigation (window.open is blocked)
+                console.log("Railway detected - navigating to dashboard...");
+                window.location.href = dashboardUrl;
+            } else {
+                // Locally: Try popup first, fallback to navigation
+                const popup = window.open(dashboardUrl, `${i}-dashboard`, "width=1000,height=800");
+                if (!popup) {
+                    // Popup blocked - fallback to navigation
+                    console.log("Popup blocked - navigating instead...");
+                    window.location.href = dashboardUrl;
+                }
+            }
         } else {
             console.warn("Bot server failed to start within timeout period");
             h(""); // Clear status
