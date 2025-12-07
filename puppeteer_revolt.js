@@ -1474,11 +1474,14 @@ async function start_everything(IDENTIFIER_USER, IS_HEADLESS = true, START_IMMED
 	try {
 		addLog({ type: "DebugMessage", message: "Trying to start bot dashboard server" });
 
-		server.listen(port, () => {
-			console.log(`Now listening to: http://localhost:${port}`);
-			open(`http://localhost:${port}`);
-			addLog({ type: "DebugMessage", message: `Now listening to: http://localhost:${port}` });
-		});
+server.listen(port, () => {
+	const serverUrl = process.env.RAILWAY_DOMAIN ? `https://${process.env.RAILWAY_DOMAIN}` : `http://localhost:${port}`;
+	console.log(`Now listening to: ${serverUrl}`);
+	if (!process.env.RAILWAY_DOMAIN) {
+		open(serverUrl);
+	}
+	addLog({ type: "DebugMessage", message: `Now listening to: ${serverUrl}` });
+});
 	} catch (error) {
 		if (error.code == "ERR_SERVER_ALREADY_LISTEN") {
 			addLog({ type: "DebugMessage", message: "Bot dashboard server already running" });
@@ -1616,8 +1619,11 @@ global_app.post("/api/add_server", async (req, res) => {
 });
 
 global_server.listen(port, () => {
-	console.log(`Now listening to: http://localhost:${port}`);
-	open(`http://localhost:${port}`);
+	const serverUrl = process.env.RAILWAY_DOMAIN ? `https://${process.env.RAILWAY_DOMAIN}` : `http://localhost:${port}`;
+	console.log(`Now listening to: ${serverUrl}`);
+	if (!process.env.RAILWAY_DOMAIN) {
+		open(serverUrl);
+	}
 
 	emit_server_info();
 });
