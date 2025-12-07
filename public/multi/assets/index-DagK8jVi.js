@@ -15923,25 +15923,50 @@ function N() {
         window.open(dashboardUrl, `@${i} - revolt bot server`, "width=600,height=400")
     }
 }
- async function U() {
-    await wt.post(`/api/server?server=${l}`);
+async function U() {
+    E(!0); // Set loading state
+    h("start_server"); // Set status
     
-    // Poll for bot to be ready
-    let isRunning = false;
-    for (let i = 0; i < 30; i++) {
-        await new Promise(r => setTimeout(r, 500));
+    try {
+        // Start the server
+        await wt.post(`/api/server?server=${l}`);
         
-        const servers = await wt.get(`/api/running-servers`);
-        if (servers.data[l]?.is_running) {
-            isRunning = true;
-            break;
+        // Poll for bot to be ready (increased timeout to 60 seconds)
+        let isRunning = false;
+        for (let attempt = 0; attempt < 60; attempt++) {
+            await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second between checks
+            
+            try {
+                const response = await wt.get(`/api/running-servers`);
+                const serverData = response.data[l] || response.data.find(s => s.folder === l);
+                
+                if (serverData && serverData.is_running) {
+                    isRunning = true;
+                    h(""); // Clear status
+                    break;
+                }
+            } catch (error) {
+                console.log(`Polling attempt ${attempt + 1} failed:`, error);
+            }
         }
+        
+        if (isRunning) {
+            // Auto-open dashboard in new tab
+            const dashboardUrl = `${window.location.origin}?server=${i}`;
+            window.open(dashboardUrl, `${i}-dashboard`, "width=1000,height=800");
+            
+            // Optional: Also navigate current window
+            // window.location.href = dashboardUrl;
+        } else {
+            console.warn("Bot server failed to start within timeout period");
+            h(""); // Clear status
+        }
+    } catch (error) {
+        console.error("Error starting server:", error);
+        h(""); // Clear status on error
     }
     
-    if (isRunning) {
-        // Auto-open dashboard!
-        window.open(`${window.location.origin}`, `_blank`);
-    }
+    E(!1); // Clear loading state
 }
  async function Z() {
     h("stop_server");
